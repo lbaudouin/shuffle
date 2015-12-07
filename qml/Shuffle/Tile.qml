@@ -36,6 +36,7 @@ Item{
 
         Text{
             id: letterText
+            visible: text!==""
             anchors.centerIn: parent
             text: model.letter
             font.pointSize: 35
@@ -44,6 +45,7 @@ Item{
 
         Text{
             id: pointsText
+            visible: text!=-1
             text: model.point
             anchors.right: parent.right
             anchors.bottom: parent.bottom

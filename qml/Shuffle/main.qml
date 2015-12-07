@@ -5,9 +5,32 @@ Rectangle {
     width: 480
     height: 640
 
+    property int totalPoints: 0
     property int points: 0
     property string word: ""
     property int timeout: 120
+
+    function check(){
+        console.debug("CHECK", root.word)
+
+        if(gridModel.exists(root.word)){
+            totalPoints += points;
+            points = 0;
+            console.debug(totalPoints)
+        }else{
+            console.debug("doesn't exist")
+        }
+
+        for(var i=0;i<letters.count;i++){
+            letters.get(i).selected = false;
+        }
+
+        word = ""
+    }
+
+    function finish(){
+        console.debug("FINISH", root.totalPoints)
+    }
 
     Timer{
         running: timeout>0
@@ -16,7 +39,7 @@ Rectangle {
         onTriggered:{
             timeout--
             if(timeout<=0){
-                console.debug("FINISHED")
+                root.finish()
             }
         }
     }
@@ -41,7 +64,7 @@ Rectangle {
 
         Text{
             color: "white"
-            text: points.toString()
+            text: totalPoints.toString()
             font.pointSize: 18
             font.bold: true
 
@@ -61,11 +84,16 @@ Rectangle {
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
-                    for(var i=0;i<letters.count;i++)
+                    for(var i=0;i<letters.count;i++){
+                        letters.get(i).letter = "";
+                        letters.get(i).points = -1;
                         letters.get(i).selected = false;
+                    }
                     root.word = ""
                     root.points = 0;
+                    root.totalPoints = 0;
                     root.timeout = 119
+                    gridModel.generate();
                 }
             }
         }
@@ -73,25 +101,6 @@ Rectangle {
 
     ListModel{
         id: letters
-        ListElement { letter: "A"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "B"; points: 1; bonus: 1; selected: false }
-        ListElement { letter: "C"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "D"; points: 2; bonus: 0; selected: false }
-
-        ListElement { letter: "E"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "F"; points: 4; bonus: 0; selected: false }
-        ListElement { letter: "G"; points: 3; bonus: 2; selected: false }
-        ListElement { letter: "A"; points: 1; bonus: 0; selected: false }
-
-        ListElement { letter: "A"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "R"; points: 1; bonus: 3; selected: false }
-        ListElement { letter: "A"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "A"; points: 1; bonus: 0; selected: false }
-
-        ListElement { letter: "A"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "A"; points: 1; bonus: 4; selected: false }
-        ListElement { letter: "O"; points: 1; bonus: 0; selected: false }
-        ListElement { letter: "A"; points: 1; bonus: 5; selected: false }
     }
 
     Rectangle{
@@ -150,10 +159,10 @@ Rectangle {
 
                         Tile{
                             width: grid.width / grid.columns
-                            letter: model.letter
-                            points: model.points
-                            bonus: model.bonus
-                            selected: model.selected || false
+                            letter: model.letter || ""
+                            points: model.points || -1
+                            bonus: model.bonus || 0
+                            selected: model.selected
                         }
                     }
                 }
@@ -167,8 +176,8 @@ Rectangle {
 
                     function posChanged(x,y){
                         if(enabled && posX>=0 && posY>=0){
-                            console.debug("pos",posX,posY)
                             var index = y*grid.columns + x;
+                            console.debug("pos",posX,posY,index,letters.count)
                             if(index<letters.count){
                                 if(!letters.get(index).selected){
                                     root.word += letters.get(index).letter
@@ -180,6 +189,13 @@ Rectangle {
                     }
 
                     function mousePosChanged(x,y){
+                        if(x<0 || y<0 || x>=width || y>=height ){
+                            root.check()
+                            enabled = false
+                            enabled = true
+                            return
+                        }
+
                         var w = content.tileSize
                         var tempPosX = Math.floor(x/w)
                         var tempPosY = Math.floor(y/w)
@@ -203,9 +219,31 @@ Rectangle {
                     onReleased: {
                         posX = -1;
                         posY = -1;
+                        root.check()
                     }
                 }
             }
         }
+    }
+
+    Connections{
+        target: gridModel
+        onGenerated:{
+            var temp = gridModel.getTilesJS();
+            console.debug( JSON.stringify( temp ))
+            letters.clear()
+            for(var i=0;i<temp.length;i++){
+                temp[i].letter = temp[i].letter || "";
+                temp[i].points = temp[i].points || -1;
+                temp[i].bonus =  temp[i].bonus  || 0;
+                temp[i].selected = temp[i].selected || false;
+                console.debug( JSON.stringify( temp[i] ))
+                letters.append( temp[i] )
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        gridModel.generate()
     }
 }
