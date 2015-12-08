@@ -42,6 +42,14 @@ public:
     Grid(QSize size);
     Grid(const Grid *grid);
 
+
+    Q_PROPERTY(int columns READ columns NOTIFY columnsChanged)
+    Q_PROPERTY(int rows READ rows NOTIFY rowsChanged)
+
+    int columns() const;
+    int rows() const;
+
+
     int sizeInt() const;
     QSize size() const;
 
@@ -75,6 +83,8 @@ public slots:
 
 signals:
     void generated();
+    void columnsChanged(int columns);
+    void rowsChanged(int rows);
 };
 
 #endif // GRID_H

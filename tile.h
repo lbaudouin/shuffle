@@ -17,7 +17,7 @@ public:
     bool visited() const;
     void setVisited();
 
-    bool near( const Tile &tile) const;
+    bool nearFrom(const Tile &tile) const;
 
     QJsonObject getTileJS() const;
 

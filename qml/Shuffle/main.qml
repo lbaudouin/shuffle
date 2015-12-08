@@ -152,7 +152,8 @@ Rectangle {
                     id: grid
                     anchors.fill: parent
                     anchors.margins: 1
-                    columns: 4
+                    columns: gridModel.columns
+                    rows: gridModel.rows
 
                     Repeater{
                         model: letters
@@ -189,28 +190,31 @@ Rectangle {
                     }
 
                     function mousePosChanged(x,y){
-                        if(x<0 || y<0 || x>=width || y>=height ){
-                            root.check()
-                            enabled = false
-                            enabled = true
-                            return
-                        }
 
                         var w = content.tileSize
                         var tempPosX = Math.floor(x/w)
                         var tempPosY = Math.floor(y/w)
 
-                        if( tempPosX<grid.columns && (Math.abs((tempPosX+0.5)*w - x) + Math.abs((tempPosY+0.5)*w - y)) <0.6*w ){
+                        if( tempPosX<0 || tempPosY<0 || tempPosX>=grid.columns || tempPosY>=grid.rows){
+                            return;
+                        }
+
+                        var near = false;
+                        if(posX<0 || posY<0){
+                            near = true;
+                        }else{
+                            if(Math.abs(posX-tempPosX)<=1 && Math.abs(posY-tempPosY)<=1){
+                                near = true;
+                            }
+                        }
+                        //console.debug(posX,posY,tempPosX,tempPosY,near)
+
+                        if( near && (Math.abs((tempPosX+0.5)*w - x) + Math.abs((tempPosY+0.5)*w - y)) <0.6*w ){
                             posX = tempPosX
                             posY = tempPosY
-                        }else{
-                            posX = -1
-                            posY = -1
+                            posChanged(posX,posY)
                         }
                     }
-
-                    onPosXChanged: posChanged(posX,posY)
-                    onPosYChanged: posChanged(posX,posY)
 
                     onPressed: mousePosChanged(mouseX,mouseY);
                     onMouseXChanged: mousePosChanged(mouseX,mouseY);
@@ -219,7 +223,8 @@ Rectangle {
                     onReleased: {
                         posX = -1;
                         posY = -1;
-                        root.check()
+                        if(enabled )
+                            root.check()
                     }
                 }
             }
@@ -233,7 +238,7 @@ Rectangle {
             console.debug( JSON.stringify( temp ))
             letters.clear()
             for(var i=0;i<temp.length;i++){
-                temp[i].letter = temp[i].letter || "";
+                temp[i].letter = temp[i].letter.toUpperCase() || "";
                 temp[i].points = temp[i].points || -1;
                 temp[i].bonus =  temp[i].bonus  || 0;
                 temp[i].selected = temp[i].selected || false;

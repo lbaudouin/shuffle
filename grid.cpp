@@ -1,6 +1,7 @@
 #include "grid.h"
 #include <QDebug>
 #include <QRegExp>
+#include <QElapsedTimer>
 
 #include "dict.h"
 
@@ -22,6 +23,16 @@ Grid::Grid(QSize size) : m_size(size)
 Grid::Grid(const Grid *grid) : m_size(grid->size())
 {
     m_tiles = grid->tiles();
+}
+
+int Grid::columns() const
+{
+    return m_size.width();
+}
+
+int Grid::rows() const
+{
+    return m_size.height();
 }
 
 int Grid::sizeInt() const
@@ -92,6 +103,9 @@ SolutionList Grid::removeDuplicates(const SolutionList &solutions) const
 
 SolutionList Grid::solve() const
 {
+    QElapsedTimer timer;
+    timer.start();
+
     QList<int> moves;
 
     QStringList words;
@@ -100,6 +114,7 @@ SolutionList Grid::solve() const
 
     qSort(sol.begin(),sol.end(),longestFirst);
 
+    qDebug() << "Solve operation took" << timer.elapsed() << "ms";
     return sol;
 }
 
@@ -117,7 +132,7 @@ SolutionList Grid::solve(int tile, QString word, const QStringList &words, QList
             continue;
 
         if(tile>=0){
-            if(!m_tiles.at(i).near( m_tiles.at(tile) )){
+            if(!m_tiles.at(i).nearFrom( m_tiles.at(tile) )){
                 continue;
             }
         }
@@ -194,6 +209,7 @@ void Grid::generate()
 
 bool Grid::exists(QString word) const
 {
+    word = word.toLower().trimmed();
     for(int i=0;i<m_solutions.size();i++){
         if( m_solutions.at(i).word == word )
             return true;

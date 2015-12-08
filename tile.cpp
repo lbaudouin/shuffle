@@ -66,7 +66,7 @@ void Tile::setVisited()
     m_visited = true;
 }
 
-bool Tile::near(const Tile &tile) const
+bool Tile::nearFrom(const Tile &tile) const
 {
     if(this->pos()==tile.pos())
         return false;
@@ -74,9 +74,8 @@ bool Tile::near(const Tile &tile) const
     int dx = this->pos().x() - tile.pos().x();
     int dy = this->pos().y() - tile.pos().y();
 
-    if(dx==0 && qAbs(dy)==1) return true;
-    if(qAbs(dx)==1 && dy==0) return true;
-    if(qAbs(dx)==1 && qAbs(dy)==1) return true;
+    if(qAbs(dx)<=1 && qAbs(dy)<=1)
+        return true;
 
     return false;
 }
