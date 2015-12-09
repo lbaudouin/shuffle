@@ -17,6 +17,8 @@ Rectangle {
             totalPoints += points;
             points = 0;
             console.debug(totalPoints)
+
+            resultsModel.foundWord(root.word.length)
         }else{
             console.debug("doesn't exist")
         }
@@ -33,7 +35,7 @@ Rectangle {
     }
 
     Timer{
-        running: timeout>0
+        //running: timeout>0
         interval: 1000
         repeat: true
         onTriggered:{
@@ -103,11 +105,25 @@ Rectangle {
         id: letters
     }
 
+    ListModel{
+        id: resultsModel
+        property int total: -1
+        property int found: -1
+
+        function foundWord(length){
+            for(var i=0;i<count;i++){
+                if(get(i).length == length){
+                    get(i).found++;
+                }
+            }
+        }
+    }
+
     Rectangle{
         id: background
         color: "#4caf50"
         anchors.top: toolbar.bottom
-        anchors.bottom: parent.bottom
+        anchors.bottom: resultsRect.top
         width: parent.width
 
         Rectangle {
@@ -178,7 +194,7 @@ Rectangle {
                     function posChanged(x,y){
                         if(enabled && posX>=0 && posY>=0){
                             var index = y*grid.columns + x;
-                            console.debug("pos",posX,posY,index,letters.count)
+                            //console.debug("pos",posX,posY,index,letters.count)
                             if(index<letters.count){
                                 if(!letters.get(index).selected){
                                     root.word += letters.get(index).letter
@@ -209,10 +225,12 @@ Rectangle {
                         }
                         //console.debug(posX,posY,tempPosX,tempPosY,near)
 
-                        if( near && (Math.abs((tempPosX+0.5)*w - x) + Math.abs((tempPosY+0.5)*w - y)) <0.6*w ){
-                            posX = tempPosX
-                            posY = tempPosY
-                            posChanged(posX,posY)
+                        if(posX != tempPosX || posY != tempPosY){
+                            if( near && (Math.abs((tempPosX+0.5)*w - x) + Math.abs((tempPosY+0.5)*w - y)) <0.6*w ){
+                                posX = tempPosX
+                                posY = tempPosY
+                                posChanged(posX,posY)
+                            }
                         }
                     }
 
@@ -226,6 +244,30 @@ Rectangle {
                         if(enabled )
                             root.check()
                     }
+                }
+            }
+        }
+    }
+
+
+    Rectangle{
+        id: resultsRect
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: 50
+
+        Grid{
+            width: parent.width
+            columns: 5
+
+            Repeater{
+                model: resultsModel
+                ResultPerLength{
+                    length: model.length
+                    found: model.found
+                    total: model.number
+
+                    width: parent.width / 5
                 }
             }
         }
@@ -245,6 +287,18 @@ Rectangle {
                 console.debug( JSON.stringify( temp[i] ))
                 letters.append( temp[i] )
             }
+        }
+        onResults:{
+            console.debug( JSON.stringify( results ))
+            resultsModel.clear();
+            resultsModel.total = results.total
+
+            for(var i=0;i<results.totalPerLength.length;i++){
+                var item = results.totalPerLength[i]
+                item.found = 0;
+                resultsModel.append( item )
+            }
+
         }
     }
 

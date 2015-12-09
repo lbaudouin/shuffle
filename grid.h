@@ -83,6 +83,8 @@ public slots:
 
 signals:
     void generated();
+    void results(QJsonObject results);
+
     void columnsChanged(int columns);
     void rowsChanged(int rows);
 };

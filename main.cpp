@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
     Dict::instance()->load(":/input/fr.txt");
 
-    Grid grid(4,4);
+    Grid grid(5,5);
 
     QtQuick2ApplicationViewer viewer;
 

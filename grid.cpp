@@ -201,10 +201,30 @@ void Grid::generate()
     this->setValues( Dict::instance()->pickRandom(this->sizeInt()) );
     this->display();
     m_solutions = this->solve();
+    QMap<int,int> lengths;
     for(int i=0;i<m_solutions.size();i++){
+        lengths[m_solutions.at(i).word.size()]++;
         qDebug() << m_solutions.at(i).word;
     }
     emit generated();
+
+    QJsonObject l;
+    l.insert("total",m_solutions.size());
+
+    QJsonArray a;
+    QMapIterator<int, int> i(lengths);
+    while (i.hasNext()) {
+        i.next();
+        QJsonObject o;
+        o.insert("length",i.key());
+        o.insert("number",i.value());
+        a.append( o );
+    }
+
+    l.insert("totalPerLength",a);
+
+    emit results(l);
+
 }
 
 bool Grid::exists(QString word) const
