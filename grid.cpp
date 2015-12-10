@@ -204,14 +204,15 @@ QJsonArray Grid::getTilesJS() const
 
 void Grid::generate()
 {
-    m_solutions.clear();
-    this->setValues( Dict::instance()->pickRandom(this->sizeInt()) );
-    //this->display();
-    m_solutions = this->solve();
+    //while(m_solutions.isEmpty() || m_solutions.first().word.size()!=9) {
+        m_solutions.clear();
+        this->setValues( Dict::instance()->pickRandom(this->sizeInt()) );
+        m_solutions = this->solve();
+    //}
+
     QMap<int,int> lengths;
     for(int i=0;i<m_solutions.size();i++){
         lengths[m_solutions.at(i).word.size()]++;
-        //qDebug() << m_solutions.at(i).word;
     }
     emit generated();
 
@@ -219,6 +220,16 @@ void Grid::generate()
     solutionsJS.insert("total",m_solutions.size());
 
     QJsonArray a;
+    for(int i=0;i<m_solutions.size();i++){
+        QJsonObject o;
+        o.insert("word",m_solutions.at(i).word);
+        o.insert("found",false);
+        o.insert("moves",toString(m_solutions.at(i).moves));
+        a.push_back( o );
+    }
+    solutionsJS.insert("words",a);
+    emit results(solutionsJS);
+
     /*QMapIterator<int, int> i(lengths);
     while (i.hasNext()) {
         i.next();
@@ -229,18 +240,6 @@ void Grid::generate()
     }
     l.insert("totalPerLength",a);
 */
-
-    for(int i=0;i<m_solutions.size();i++){
-        QJsonObject o;
-        o.insert("word",m_solutions.at(i).word);
-        o.insert("found",false);
-        o.insert("moves",toString(m_solutions.at(i).moves));
-        a.push_back( o );
-    }
-    solutionsJS.insert("words",a);
-
-
-    emit results(solutionsJS);
 
 }
 

@@ -22,7 +22,7 @@ Rectangle {
                 points = 0;
                 console.debug(totalPoints)
 
-                resultsModel.foundWord(root.word.length)
+                lengthModel.foundWord(root.word.length)
 
                 wordsFound.push( root.word )
                 console.debug( JSON.stringify(wordsFound))
@@ -31,8 +31,8 @@ Rectangle {
             }
         }
 
-        for(var i=0;i<letters.count;i++){
-            letters.get(i).selected = false;
+        for(var i=0;i<lettersModel.count;i++){
+            lettersModel.get(i).selected = false;
         }
 
         word = ""
@@ -101,10 +101,10 @@ Rectangle {
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
-                    for(var i=0;i<letters.count;i++){
-                        letters.get(i).letter = "";
-                        letters.get(i).points = -1;
-                        letters.get(i).selected = false;
+                    for(var i=0;i<lettersModel.count;i++){
+                        lettersModel.get(i).letter = "";
+                        lettersModel.get(i).points = -1;
+                        lettersModel.get(i).selected = false;
                     }
                     root.word = ""
                     root.points = 0;
@@ -117,17 +117,21 @@ Rectangle {
     }
 
     ListModel{
-        id: letters
+        id: lettersModel
     }
 
     ListModel{
         id: resultsModel
         property int total: -1
         property int found: -1
+    }
+
+    ListModel{
+        id: lengthModel
 
         function foundWord(length){
             for(var i=0;i<count;i++){
-                if(get(i).length == length){
+                if(get(i).wordLength == length){
                     get(i).found++;
                 }
             }
@@ -187,7 +191,7 @@ Rectangle {
                     rows: gridModel.rows
 
                     Repeater{
-                        model: letters
+                        model: lettersModel
 
                         Tile{
                             width: grid.width / grid.columns
@@ -209,12 +213,12 @@ Rectangle {
                     function posChanged(x,y){
                         if(enabled && posX>=0 && posY>=0){
                             var index = y*grid.columns + x;
-                            //console.debug("pos",posX,posY,index,letters.count)
-                            if(index<letters.count){
-                                if(!letters.get(index).selected){
-                                    root.word += letters.get(index).letter
-                                    root.points += letters.get(index).points
-                                    letters.get(index).selected = true;
+                            //console.debug("pos",posX,posY,index,lettersModel.count)
+                            if(index<lettersModel.count){
+                                if(!lettersModel.get(index).selected){
+                                    root.word += lettersModel.get(index).letter
+                                    root.points += lettersModel.get(index).points
+                                    lettersModel.get(index).selected = true;
                                 }
                             }
                         }
@@ -276,9 +280,9 @@ Rectangle {
             columns: 5
 
             Repeater{
-                model: resultsModel
+                model: lengthModel
                 ResultPerLength{
-                    length: model.length
+                    length: model.wordLength
                     found: model.found
                     total: model.number
 
@@ -293,14 +297,14 @@ Rectangle {
         onGenerated:{
             var temp = gridModel.getTilesJS();
             //console.debug( JSON.stringify( temp ))
-            letters.clear()
+            lettersModel.clear()
             for(var i=0;i<temp.length;i++){
                 temp[i].letter = temp[i].letter.toUpperCase() || "";
                 temp[i].points = temp[i].points || -1;
                 temp[i].bonus =  temp[i].bonus  || 0;
                 temp[i].selected = temp[i].selected || false;
                 //console.debug( JSON.stringify( temp[i] ))
-                letters.append( temp[i] )
+                lettersModel.append( temp[i] )
             }
         }
         onResults:{
@@ -308,12 +312,28 @@ Rectangle {
             resultsModel.clear();
             resultsModel.total = results.total
 
-            /*for(var i=0;i<results.totalPerLength.length;i++){
-                var item = results.totalPerLength[i]
-                item.found = 0;
-                resultsModel.append( item )
-            }*/
+            lengthModel.clear()
 
+            var ll = {}
+
+            for(var i=0;i<results.words.length;i++){
+                resultsModel.append( results.words[i] )
+
+                var l = results.words[i].word.length
+
+                if(l in ll){
+                    ll[l].number = ll[l].number + 1
+                }else{
+                    ll[l] = {}
+                    ll[l].number = 1
+                    ll[l].wordLength = l
+                    ll[l].found = 0
+                }
+            }
+
+            for(var k in ll){
+                lengthModel.append( ll[k] )
+            }
         }
     }
 
