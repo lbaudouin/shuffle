@@ -5,6 +5,13 @@
 
 #include "dict.h"
 
+QString toString(const QList<int> &list){
+    QStringList out;
+    for(int i=0;i<list.size();i++)
+        out << QString::number(list.at(i));
+    return out.join(",");
+}
+
 bool longestFirst(const Solution &s1, const Solution &s2)
 {
     return s1.word.size() > s2.word.size();
@@ -199,31 +206,41 @@ void Grid::generate()
 {
     m_solutions.clear();
     this->setValues( Dict::instance()->pickRandom(this->sizeInt()) );
-    this->display();
+    //this->display();
     m_solutions = this->solve();
     QMap<int,int> lengths;
     for(int i=0;i<m_solutions.size();i++){
         lengths[m_solutions.at(i).word.size()]++;
-        qDebug() << m_solutions.at(i).word;
+        //qDebug() << m_solutions.at(i).word;
     }
     emit generated();
 
-    QJsonObject l;
-    l.insert("total",m_solutions.size());
+    QJsonObject solutionsJS;
+    solutionsJS.insert("total",m_solutions.size());
 
     QJsonArray a;
-    QMapIterator<int, int> i(lengths);
+    /*QMapIterator<int, int> i(lengths);
     while (i.hasNext()) {
         i.next();
         QJsonObject o;
-        o.insert("length",i.key());
+        o.insert("word",i.key());
         o.insert("number",i.value());
         a.append( o );
     }
-
     l.insert("totalPerLength",a);
+*/
 
-    emit results(l);
+    for(int i=0;i<m_solutions.size();i++){
+        QJsonObject o;
+        o.insert("word",m_solutions.at(i).word);
+        o.insert("found",false);
+        o.insert("moves",toString(m_solutions.at(i).moves));
+        a.push_back( o );
+    }
+    solutionsJS.insert("words",a);
+
+
+    emit results(solutionsJS);
 
 }
 
@@ -235,4 +252,11 @@ bool Grid::exists(QString word) const
             return true;
     }
     return false;
+}
+
+void Grid::displaySolutions()
+{
+    for(int i=0;i<m_solutions.size();i++){
+        qDebug() << m_solutions.at(i).word;
+    }
 }

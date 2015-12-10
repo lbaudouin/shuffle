@@ -8,19 +8,27 @@ Rectangle {
     property int totalPoints: 0
     property int points: 0
     property string word: ""
+    property var wordsFound: []
     property int timeout: 120
 
     function check(){
         console.debug("CHECK", root.word)
 
-        if(gridModel.exists(root.word)){
-            totalPoints += points;
-            points = 0;
-            console.debug(totalPoints)
-
-            resultsModel.foundWord(root.word.length)
+        if(wordsFound.indexOf(root.word )>=0){
+            console.debug("already found")
         }else{
-            console.debug("doesn't exist")
+            if(gridModel.exists(root.word)){
+                totalPoints += points;
+                points = 0;
+                console.debug(totalPoints)
+
+                resultsModel.foundWord(root.word.length)
+
+                wordsFound.push( root.word )
+                console.debug( JSON.stringify(wordsFound))
+            }else{
+                console.debug("doesn't exist")
+            }
         }
 
         for(var i=0;i<letters.count;i++){
@@ -71,6 +79,13 @@ Rectangle {
             font.bold: true
 
             anchors.centerIn: parent
+
+            MouseArea{
+                anchors.fill: parent
+                onPressAndHold: {
+                    gridModel.displaySolutions();
+                }
+            }
         }
 
         Text{
@@ -277,27 +292,27 @@ Rectangle {
         target: gridModel
         onGenerated:{
             var temp = gridModel.getTilesJS();
-            console.debug( JSON.stringify( temp ))
+            //console.debug( JSON.stringify( temp ))
             letters.clear()
             for(var i=0;i<temp.length;i++){
                 temp[i].letter = temp[i].letter.toUpperCase() || "";
                 temp[i].points = temp[i].points || -1;
                 temp[i].bonus =  temp[i].bonus  || 0;
                 temp[i].selected = temp[i].selected || false;
-                console.debug( JSON.stringify( temp[i] ))
+                //console.debug( JSON.stringify( temp[i] ))
                 letters.append( temp[i] )
             }
         }
         onResults:{
-            console.debug( JSON.stringify( results ))
+            //console.debug( JSON.stringify( results ))
             resultsModel.clear();
             resultsModel.total = results.total
 
-            for(var i=0;i<results.totalPerLength.length;i++){
+            /*for(var i=0;i<results.totalPerLength.length;i++){
                 var item = results.totalPerLength[i]
                 item.found = 0;
                 resultsModel.append( item )
-            }
+            }*/
 
         }
     }

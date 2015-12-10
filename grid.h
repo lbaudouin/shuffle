@@ -81,6 +81,8 @@ public slots:
 
     bool exists(QString word) const;
 
+    void displaySolutions();
+
 signals:
     void generated();
     void results(QJsonObject results);
