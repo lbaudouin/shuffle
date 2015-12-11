@@ -12,23 +12,10 @@ Rectangle {
     property int timeout: 120
 
     function check(){
-        console.debug("CHECK", root.word)
 
-        if(wordsFound.indexOf(root.word )>=0){
-            console.debug("already found")
-        }else{
-            if(gridModel.exists(root.word)){
-                totalPoints += points;
-                points = 0;
-                console.debug(totalPoints)
-
-                lengthModel.foundWord(root.word.length)
-
-                wordsFound.push( root.word )
-                console.debug( JSON.stringify(wordsFound))
-            }else{
-                console.debug("doesn't exist")
-            }
+        if( resultsModel.check( root.word )){
+            totalPoints += points;
+            points = 0;
         }
 
         for(var i=0;i<lettersModel.count;i++){
@@ -56,7 +43,7 @@ Rectangle {
 
     Rectangle{
         id: toolbar
-        color: "#388e3c"
+        color: "#757575"
         height: 50
         width: parent.width
 
@@ -124,6 +111,27 @@ Rectangle {
         id: resultsModel
         property int total: -1
         property int found: -1
+
+        function check(word){
+            word = word.toLowerCase()
+            for(var i=0;i<resultsModel.count;i++){
+                if(word === resultsModel.get(i).word ){
+                    if(resultsModel.get(i).found){
+                        console.debug("Already found", word)
+                        return false;
+                    }else{
+                        resultsModel.get(i).found = true;
+                        lengthModel.foundWord(word.length)
+                        console.debug("Found",word)
+                        found++;
+                        return true;
+                    }
+                }
+            }
+            console.debug("Not found", word)
+            return false;
+        }
+
     }
 
     ListModel{
@@ -131,7 +139,7 @@ Rectangle {
 
         function foundWord(length){
             for(var i=0;i<count;i++){
-                if(get(i).wordLength == length){
+                if(get(i).wordLength === length){
                     get(i).found++;
                 }
             }
@@ -140,30 +148,38 @@ Rectangle {
 
     Rectangle{
         id: background
-        color: "#4caf50"
+        color: "#bdbdbd"
         anchors.top: toolbar.bottom
         anchors.bottom: resultsRect.top
         width: parent.width
 
         Rectangle {
             id: current
-            color: "#388e3c"
+            color: "#e0e0e0"
             anchors.top: parent.top
             anchors.topMargin: 10
             anchors.horizontalCenter: parent.horizontalCenter
-            height: 50
+            height: currentBackground.height * 1.1
             width: parent.width * 0.80
             radius: 3
 
-            Text{
-                id: currentText
-                font.pointSize: 25
-                font.bold: true
-                color: "white"
-                text: root.word
-
-
+            Rectangle{
+                id: currentBackground
+                color: "orange"
                 anchors.centerIn: parent
+                height: currentText.height * 1.1
+                width: currentText.width * 1.1
+                radius: 5
+
+                Text{
+                    id: currentText
+                    font.pointSize: 25
+                    font.bold: true
+                    color: "white"
+                    text: root.word
+
+                    anchors.centerIn: parent
+                }
             }
         }
 
@@ -213,7 +229,9 @@ Rectangle {
                     function posChanged(x,y){
                         if(enabled && posX>=0 && posY>=0){
                             var index = y*grid.columns + x;
-                            //console.debug("pos",posX,posY,index,lettersModel.count)
+
+                            //console.debug("pos",posX,posY)
+
                             if(index<lettersModel.count){
                                 if(!lettersModel.get(index).selected){
                                     root.word += lettersModel.get(index).letter
@@ -246,9 +264,15 @@ Rectangle {
 
                         if(posX != tempPosX || posY != tempPosY){
                             if( near && (Math.abs((tempPosX+0.5)*w - x) + Math.abs((tempPosY+0.5)*w - y)) <0.6*w ){
-                                posX = tempPosX
-                                posY = tempPosY
-                                posChanged(posX,posY)
+
+                                var index = tempPosY*grid.columns + tempPosX;
+                                if(index<lettersModel.count){
+                                    if(!lettersModel.get(index).selected){
+                                        posX = tempPosX
+                                        posY = tempPosY
+                                        posChanged(posX,posY)
+                                    }
+                                }
                             }
                         }
                     }
@@ -275,18 +299,29 @@ Rectangle {
         width: parent.width
         height: 50
 
-        Grid{
+        Column{
             width: parent.width
-            columns: 5
+            ResultPerLength{
+                length: qsTr("Total")
+                found: resultsModel.found
+                total: resultsModel.total
 
-            Repeater{
-                model: lengthModel
-                ResultPerLength{
-                    length: model.wordLength
-                    found: model.found
-                    total: model.number
+                width: parent.width
+            }
 
-                    width: parent.width / 5
+            Grid{
+                width: parent.width
+                columns: 5
+
+                Repeater{
+                    model: lengthModel
+                    ResultPerLength{
+                        length: model.wordLength
+                        found: model.found
+                        total: model.number
+
+                        width: parent.width / 5
+                    }
                 }
             }
         }
@@ -311,6 +346,7 @@ Rectangle {
             //console.debug( JSON.stringify( results ))
             resultsModel.clear();
             resultsModel.total = results.total
+            resultsModel.found = 0
 
             lengthModel.clear()
 

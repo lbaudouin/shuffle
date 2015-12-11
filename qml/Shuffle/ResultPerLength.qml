@@ -5,7 +5,7 @@ Rectangle {
 
     height: lengthText.height
 
-    property int length: -1
+    property string length: ""
     property int found: -1
     property int total: -1
 
