@@ -4,6 +4,7 @@
 #include <QChar>
 #include <QPoint>
 #include <QJsonObject>
+#include <QJsonArray>
 
 class Tile
 {
@@ -22,6 +23,7 @@ public:
     QJsonObject getTileJS() const;
 
     static int pointsForLetter(const QChar &c);
+    static QJsonArray pointsForWord(const QString &word);
 
 private:
     QPoint m_pt;

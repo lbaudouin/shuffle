@@ -45,6 +45,7 @@ public:
 
     Q_PROPERTY(int columns READ columns NOTIFY columnsChanged)
     Q_PROPERTY(int rows READ rows NOTIFY rowsChanged)
+    Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
 
     int columns() const;
     int rows() const;
@@ -77,11 +78,15 @@ private:
 
 public slots:
     QJsonArray getTilesJS() const;
-    void generate();
+    void generate(int width = 4, int height = 4);
+    void generateEmpty(int width = 4, int height = 4);
+    void solve(QString letters);
 
     bool exists(QString word) const;
 
     void displaySolutions();
+
+    QJsonArray pointsForWord(const QString &) const;
 
 signals:
     void generated();
@@ -89,6 +94,7 @@ signals:
 
     void columnsChanged(int columns);
     void rowsChanged(int rows);
+    void sizeChanged(QSize size);
 };
 
 #endif // GRID_H

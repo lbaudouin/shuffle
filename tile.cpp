@@ -92,5 +92,14 @@ QJsonObject Tile::getTileJS() const
 int Tile::pointsForLetter(const QChar &c)
 {
     if(letterPoints.isEmpty()) populate();
-    return letterPoints.value(c);
+    return letterPoints.value(c.toLower());
+}
+
+QJsonArray Tile::pointsForWord(const QString &word)
+{
+    QJsonArray a;
+    for(int i=0;i<word.size();i++){
+        a.append( QJsonValue::fromVariant( pointsForLetter(word.at(i)) ) );
+    }
+    return a;
 }

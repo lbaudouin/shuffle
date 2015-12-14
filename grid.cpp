@@ -108,6 +108,53 @@ SolutionList Grid::removeDuplicates(const SolutionList &solutions) const
     return out;
 }
 
+void Grid::solve(QString letters)
+{
+    letters = letters.trimmed();
+    QList<QChar> chars;
+    for(int i=0;i<letters.size();i++){
+        if(letters.at(i).isLetter()){
+            chars << letters.at(i).toLower();
+        }
+    }
+
+    QSize size;
+    switch(chars.size()){
+    case 9: size = QSize(3,3); break;
+    case 12: size = QSize(4,3); break;
+    case 16: size = QSize(4,4); break;
+    case 20: size = QSize(5,4); break;
+    case 25: size = QSize(5,5); break;
+    }
+
+    if(m_size!=size){
+        m_size = size;
+        emit sizeChanged(m_size);
+        emit rowsChanged( m_size.height() );
+        emit columnsChanged( m_size.width() );
+    }
+
+    this->setValues( chars );
+
+    emit generated();
+
+    m_solutions = solve();
+
+    QJsonObject solutionsJS;
+    solutionsJS.insert("total",m_solutions.size());
+
+    QJsonArray a;
+    for(int i=0;i<m_solutions.size();i++){
+        QJsonObject o;
+        o.insert("word",m_solutions.at(i).word);
+        o.insert("found",false);
+        o.insert("moves",toString(m_solutions.at(i).moves));
+        a.push_back( o );
+    }
+    solutionsJS.insert("words",a);
+    emit results(solutionsJS);
+}
+
 SolutionList Grid::solve() const
 {
     QElapsedTimer timer;
@@ -202,8 +249,14 @@ QJsonArray Grid::getTilesJS() const
     return a;
 }
 
-void Grid::generate()
+void Grid::generate(int width, int height)
 {
+    QSize size(width,height);
+    if(m_size!=size){
+        m_size = size;
+        emit sizeChanged(m_size);
+    }
+
     //while(m_solutions.isEmpty() || m_solutions.first().word.size()!=9) {
         m_solutions.clear();
         this->setValues( Dict::instance()->pickRandom(this->sizeInt()) );
@@ -243,6 +296,31 @@ void Grid::generate()
 
 }
 
+void Grid::generateEmpty(int width, int height)
+{
+    QSize size(width,height);
+    if(m_size!=size){
+        m_size = size;
+        emit sizeChanged(m_size);
+    }
+    QList<QChar> list;
+    for(int i=0;i<this->sizeInt();i++){
+        list << QChar(' ');
+    }
+
+    this->setValues( list );
+    m_solutions.clear();
+
+    emit generated();
+
+    QJsonObject solutionsJS;
+    solutionsJS.insert("total",0);
+
+    QJsonArray a;
+    solutionsJS.insert("words",a);
+    emit results(solutionsJS);
+}
+
 bool Grid::exists(QString word) const
 {
     word = word.toLower().trimmed();
@@ -258,4 +336,9 @@ void Grid::displaySolutions()
     for(int i=0;i<m_solutions.size();i++){
         qDebug() << m_solutions.at(i).word;
     }
+}
+
+QJsonArray Grid::pointsForWord(const QString &word) const
+{
+    return Tile::pointsForWord(word);
 }
